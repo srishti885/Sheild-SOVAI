@@ -1,6 +1,6 @@
 {
   "hosting": {
-    "public": "apps/sovereign-ui/dist",
+    "public": "dist", 
     "ignore": [
       "firebase.json",
       "**/.*",
