@@ -12,6 +12,23 @@ jobs:
       - name: Install and Build
         run: npm install && npm run build
         working-directory: apps/sovereign-ui
+        # --- YE SECTION SARE SECRETS KO CONNECT KAREGA ---
+        env:
+          VITE_FIREBASE_API_KEY: ${{ secrets.VITE_FIREBASE_API_KEY }}
+          VITE_FIREBASE_APP_ID: ${{ secrets.VITE_FIREBASE_APP_ID }}
+          VITE_FIREBASE_DATABASE_URL: ${{ secrets.VITE_FIREBASE_DATABASE_URL }}
+          VITE_MASTER_KEY: ${{ secrets.VITE_MASTER_KEY }}
+          VITE_ADMIN_UID: ${{ secrets.VITE_ADMIN_UID }}
+          VITE_LIVE_BACKEND: ${{ secrets.VITE_LIVE_BACKEND }}
+          VITE_LIVE_AI: ${{ secrets.VITE_LIVE_AI }}
+          # Static Config (Inhe secrets me dalne ki zarurat nahi hai)
+          VITE_FIREBASE_PROJECT_ID: "sov-ai-security"
+          VITE_FIREBASE_AUTH_DOMAIN: "sov-ai-security.firebaseapp.com"
+          VITE_FIREBASE_STORAGE_BUCKET: "sov-ai-security.firebasestorage.app"
+          VITE_FIREBASE_MESSAGING_SENDER_ID: "541944605052"
+          VITE_FIREBASE_MEASUREMENT_ID: "G-91TCG0GMGM"
+          VITE_ADMIN_NAME: "SRISHTI GOENKA"
+          VITE_LIVE_FRONTEND: "https://sov-ai-security.web.app"
 
       - uses: FirebaseExtended/action-hosting-deploy@v0
         with:
@@ -19,5 +36,4 @@ jobs:
           firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_SOV_AI_SECURITY }}
           channelId: live
           projectId: sov-ai-security
-          # --- YAHAN CHANGE KIYA HAI ---
           entryPoint: apps/sovereign-ui
