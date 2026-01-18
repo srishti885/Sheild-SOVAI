@@ -21,7 +21,7 @@ jobs:
           VITE_ADMIN_UID: ${{ secrets.VITE_ADMIN_UID }}
           VITE_LIVE_BACKEND: ${{ secrets.VITE_LIVE_BACKEND }}
           VITE_LIVE_AI: ${{ secrets.VITE_LIVE_AI }}
-          # Static Config (Inhe secrets me dalne ki zarurat nahi hai)
+          # Static Config
           VITE_FIREBASE_PROJECT_ID: "sov-ai-security"
           VITE_FIREBASE_AUTH_DOMAIN: "sov-ai-security.firebaseapp.com"
           VITE_FIREBASE_STORAGE_BUCKET: "sov-ai-security.firebasestorage.app"
