@@ -1,0 +1,33 @@
+# --- SHIELDAI MONOREPO UNIVERSAL IGNORE ---
+
+# Node Dependencies (Sab folders ke liye)
+node_modules/
+**/node_modules/
+
+# Python Environment
+venv/
+**/venv/
+__pycache__/
+**/__pycache__/
+
+# Secrets & Config (SABSE ZARURI)
+.env
+**/.env
+*.local
+
+
+# Build & System Files
+dist/
+**/dist/
+build/
+**/build/
+.DS_Store
+Thumbs.db
+Sovereign-vision.spec
+
+# AI Data & Snapshots
+runs/
+detect/
+breach_snapshots/
+sovereign_breach_report.csv
+admin_auth/

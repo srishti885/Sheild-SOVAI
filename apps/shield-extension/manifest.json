@@ -1,0 +1,17 @@
+{
+  "manifest_version": 3,
+  "name": "ShieldAI Enterprise Proxy",
+  "version": "1.0",
+  "description": "Enterprise-grade data protection for AI workflows.",
+  "permissions": ["storage", "activeTab", "scripting"],
+  "host_permissions": ["http://localhost:5000/*"],
+  "content_scripts": [
+    {
+      "matches": ["https://chatgpt.com/*", "https://claude.ai/*", "https://gemini.google.com/*"],
+      "js": ["content.js"]
+    }
+  ],
+  "action": {
+    "default_popup": "popup.html"
+  }
+}

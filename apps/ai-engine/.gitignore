@@ -1,0 +1,28 @@
+# --- SHIELDAI AI-ENG IGNORE LIST ---
+
+# 1. Environment & Secrets (DO NOT PUSH)
+.env
+venv/
+env/
+__pycache__/
+*.py[cod]
+
+# 2. Executable & Build Files (PyInstaller)
+build/
+dist/
+Sovereign-vision.spec
+*.exe
+
+# 3. AI Data & Reports (Heavy/Private)
+runs/
+detect/
+breach_snapshots/
+sovereign_breach_report.csv
+admin_auth/
+backup_old/
+
+# 4. OS/System Files
+.DS_Store
+Thumbs.db
+
+# NOTE: requirements.txt will NOT be ignored (It's safe to push)

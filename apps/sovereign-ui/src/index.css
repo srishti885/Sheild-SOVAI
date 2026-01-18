@@ -1,0 +1,36 @@
+@import "tailwindcss";
+
+/* Tailwind v4 mein yahan variables define hote hain */
+@theme {
+  --color-sov-navy: #000c18;
+  --color-sov-blue: #1890ff;
+  --color-sov-green: #86bc25;
+  --color-glass: rgba(255, 255, 255, 0.03);
+}
+
+@layer base {
+  body {
+    margin: 0;
+    background: radial-gradient(circle at top right, #001e3c, #000c18);
+    color: #ffffff;
+    font-family: 'Inter', system-ui, sans-serif;
+    overflow-x: hidden;
+  }
+}
+
+/* Advanced Canva-Style Animations */
+@keyframes scan {
+  from { transform: translateY(-100%); }
+  to { transform: translateY(1000%); }
+}
+
+.animate-scan {
+  animation: scan 3s linear infinite;
+}
+
+.glass-card {
+  background: var(--color-glass);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+}
