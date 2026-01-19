@@ -24,6 +24,11 @@ from flask import Flask, jsonify
 from flask_cors import CORS
 from threading import Thread
 
+# --- GLOBAL STATE INITIALIZATION (FIXES NAMEERROR) ---
+admin_trained = False
+recognizer = None
+is_admin_verified = False
+
 # --- SYSTEM CONFIGURATION (v2.0 Integrity) ---
 logging.basicConfig(level=logging.INFO, format='[%(asctime)s] %(levelname)s: %(message)s')
 logger = logging.getLogger("Sovereign_AI")
@@ -43,11 +48,9 @@ ADMIN_PHOTO = "admin_auth/me.jpg"
 # --- FLASK BACKGROUND SERVER ---
 app = Flask(__name__)
 CORS(app)
-is_admin_verified = False
 
 @app.route('/api/v1/vision-status', methods=['GET'])
 def get_status():
-    # Dashboard checks this to see if it should auto-login
     return jsonify({"active": True, "admin_verified": is_admin_verified})
 
 # --- ENGINE INITIALIZATION ---
@@ -58,7 +61,6 @@ try:
     # Safe LBPH Init
     try:
         recognizer = cv2.face.LBPHFaceRecognizer_create()
-        admin_trained = False
         logger.info("CORE_ENGINE: Face Recognition module active")
     except AttributeError:
         logger.error("CV2_CONTRIB_ERROR: LBPH module missing. Admin recognition disabled.")
@@ -85,7 +87,9 @@ try:
 
 except Exception as e:
     logger.error(f"FATAL_INIT_ERROR: {str(e)}")
-    exit()
+    # Ensure variables exist even on failure to prevent loop crash
+    if 'admin_trained' not in globals(): admin_trained = False
+    if 'recognizer' not in globals(): recognizer = None
 
 # State Management
 last_alert_time = 0
@@ -146,21 +150,23 @@ def dispatch_alert(alert_type, item_desc, severity_level):
         except: pass
 
 def process_frame(frame):
-    global last_frame_captured, is_admin_verified
+    global last_frame_captured, is_admin_verified, admin_trained, recognizer
     h, w, _ = frame.shape
     last_frame_captured = frame.copy()
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
     
     # 1. Admin Auth Logic
-    is_admin_verified = False
+    local_admin_verified = False
     if admin_trained and recognizer:
         faces = face_cascade.detectMultiScale(gray, 1.2, 5)
         for (x, y, w_f, h_f) in faces:
             label, conf = recognizer.predict(gray[y:y+h_f, x:x+w_f])
             if label == 1 and conf < 75:
-                is_admin_verified = True
+                local_admin_verified = True
                 cv2.rectangle(frame, (x, y), (x+w_f, y+h_f), (0, 255, 0), 2)
                 cv2.putText(frame, "ADMIN VERIFIED", (x, y-10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+    
+    is_admin_verified = local_admin_verified
 
     # 2. YOLO & v2.0 Logic (Blur, SOS, Gaze)
     results = model(frame, stream=True, verbose=False)
@@ -184,10 +190,11 @@ def process_frame(frame):
                 if (w * 0.3) < centroid_x < (w * 0.7): focal_gaze = True
                 if y1 < (h * 0.1): sos_signal = True
                 
-                # Gaussian Blur (v2.0 Integrity)
-                face_zone = frame[y1:y2, x1:x2]
-                if face_zone.size > 0:
-                    frame[y1:y2, x1:x2] = cv2.GaussianBlur(face_zone, (99, 99), 30)
+                # Gaussian Blur (Only if NOT Admin)
+                if not is_admin_verified:
+                    face_zone = frame[y1:y2, x1:x2]
+                    if face_zone.size > 0:
+                        frame[y1:y2, x1:x2] = cv2.GaussianBlur(face_zone, (99, 99), 30)
 
             elif cls_id == 67 and conf_score > 0.35:
                 active_objects += 1
@@ -208,6 +215,7 @@ def run_engine():
     cap.set(cv2.CAP_PROP_FRAME_WIDTH, FRAME_WIDTH)
     cap.set(cv2.CAP_PROP_FRAME_HEIGHT, FRAME_HEIGHT)
     
+    # Start Flask on thread
     Thread(target=lambda: app.run(port=5001, debug=False, use_reloader=False), daemon=True).start()
     logger.info("SYSTEM_STATUS: Operational - Neural Stream Monitoring Active")
 
@@ -221,7 +229,7 @@ def run_engine():
 
         processed_img, p_found, is_gazing, is_sos, count = process_frame(frame)
 
-        # Dashboard Stream & Safety Net (Prevents Lag if Dashboard is Off)
+        # Dashboard Stream & Safety Net
         try:
             # Heartbeat
             requests.post(f"{GATEWAY_API}/heartbeat", json={"engine": "ACTIVE", "fps": round(fps, 2)}, timeout=0.05)
@@ -235,7 +243,7 @@ def run_engine():
                 "person_count": count
             }, timeout=0.05)
         except:
-            pass # Silent ignore if port 5000 is down
+            pass 
 
         # Timers Logic
         if p_found and not is_gazing:
@@ -250,17 +258,18 @@ def run_engine():
                 dispatch_alert("PERSONNEL_DISTRESS", "Confirmed SOS gesture", "URGENT")
         else: sos_timer_start = None
 
-        if count > 1:
+        if count > 1 and not is_admin_verified:
             dispatch_alert("VISUAL_BREACH", f"PROXIMITY_ALERT: {count} persons", "HIGH")
 
         # UI Overlay
+        status_text = "PROTECTED" if is_admin_verified else "SCANNING"
         status_color = (0, 255, 0) if is_admin_verified else (0, 255, 255)
-        cv2.putText(processed_img, f"SHIELD_AI | SOVEREIGN: {'PROTECTED' if is_admin_verified else 'SCANNING'}", 
+        cv2.putText(processed_img, f"SHIELD_AI | SOVEREIGN: {status_text}", 
                     (20, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.6, status_color, 2)
 
         cv2.imshow("Sovereign_Visual_Engine_v3.2", processed_img)
         if cv2.waitKey(1) & 0xFF == ord('q'): break
-        time.sleep(0.01) # Reduced sleep for better responsiveness
+        time.sleep(0.01)
 
     cap.release()
     cv2.destroyAllWindows()
